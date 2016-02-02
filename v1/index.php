@@ -9,6 +9,9 @@
   // User id from db - Global Variable
   $user_id = NULL;
 
+  // Db connnect
+  require_once dirname(dirname(__FILE__)) . '/config/DbConnect.php';
+
   // Helpers
   require_once dirname(__FILE__) . '/helpers/verifyParams.php';
   require_once dirname(__FILE__) . '/helpers/validateEmail.php';

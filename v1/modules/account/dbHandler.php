@@ -11,7 +11,6 @@
       private $conn;
 
       function __construct() {
-          require_once dirname(dirname(dirname(__FILE__))) . '/helpers/DBConnect.php';
           // opening db connection
           $db = new DbConnect();
           $this->conn = $db->connect();
