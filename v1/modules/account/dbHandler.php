@@ -20,11 +20,14 @@
 
       /**
        * Creating new user
-       * @param String $name User full name
+       * @param String $firstName
+       * @param String $lastName
        * @param String $email User login email id
        * @param String $password User login password
+       * @param String $phone
+       * @param String $birthdate
        */
-      public function createUser($name, $email, $password) {
+      public function createUser($first_name, $last_name, $email, $password, $phone, $birthdate) {
           $response = array();
 
           // First check if user already existed in db
@@ -36,8 +39,9 @@
               $api_key = $this->generateApiKey();
 
               // insert query
-              $stmt = $this->conn->prepare("INSERT INTO users(name, email, password_hash, api_key, status) values(?, ?, ?, ?, 1)");
-              $stmt->bind_param("ssss", $name, $email, $password_hash, $api_key);
+              $stmt = $this->conn->prepare("INSERT INTO users(first_name, last_name, email, password_hash, phone, birthdate, api_key, status) values(?, ?, ?, ?, ?, ?, ?, 1)");
+              
+              $stmt->bind_param("sssssss", $first_name, $last_name, $email, $phone, $birthdate, $password_hash, $api_key);
 
               $result = $stmt->execute();
 
@@ -102,14 +106,15 @@
 
       /**
        * Edit user
-       * @param String $$nameid User new $name
-       * @param String $email User new $email
+       * @param String $first_name User new first_name
+       * @param String $last_name User new last_name
+       * @param String $birthdate User new birthdate
        * @param String $password User new password
        */
-      public function editUser($user_id, $name, $password) {
+      public function editUser($user_id, $first_name, $last_name, $birthdate, $password) {
           $password_hash = PassHash::hash($password);
-          $stmt = $this->conn->prepare("UPDATE users SET name = ?, password_hash = ? Where id = ?");
-          $stmt->bind_param("ssi", $name, $password_hash, $user_id);
+          $stmt = $this->conn->prepare("UPDATE users SET first_name = ?, last_name = ?, birthdate = ?, password_hash = ? Where id = ?");
+          $stmt->bind_param("ssssi", $first_name, $last_name, $birthdate, $password_hash, $user_id);
           $stmt->execute();
           $num_affected_rows = $stmt->affected_rows;
           $stmt->close();
