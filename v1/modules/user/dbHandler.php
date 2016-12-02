@@ -109,17 +109,35 @@
        * @param String $first_name User new first_name
        * @param String $last_name User new last_name
        * @param String $birthdate User new birthdate
-       * @param String $password User new password
+       * @param String $phone User new phone
        */
-      public function editUser($user_id, $first_name, $last_name, $birthdate, $password) {
-          $password_hash = PassHash::hash($password);
-          $stmt = $this->conn->prepare("UPDATE users SET first_name = ?, last_name = ?, birthdate = ?, password_hash = ? Where id = ?");
-          $stmt->bind_param("ssssi", $first_name, $last_name, $birthdate, $password_hash, $user_id);
+      public function editUser($user_id, $first_name, $last_name, $birthdate, $phone) {
+          $stmt = $this->conn->prepare("UPDATE users SET first_name = ?, last_name = ?, birthdate = ?, phone = ? Where id = ?");
+          $stmt->bind_param("ssssi", $first_name, $last_name, $birthdate, $phone, $user_id);
           $stmt->execute();
           $num_affected_rows = $stmt->affected_rows;
           $stmt->close();
           return $num_affected_rows > 0;
       }
+
+       /**
+       * Edit user password
+       * @param String $password User new password
+       */
+        public function editUserPassword($user_id, $password) {
+            $password_hash = PassHash::hash($password);
+
+            // Generating API key
+            $api_key = $this->generateApiKey();
+
+            $stmt = $this->conn->prepare("UPDATE users SET password_hash = ?, api_key = ? Where id = ?");
+            $stmt->bind_param("ssi", $password_hash, $api_key, $user_id);
+            $stmt->execute();
+            $num_affected_rows = $stmt->affected_rows;
+            $stmt->close();
+            return $num_affected_rows > 0;
+        }
+
 
       /**
        * Checking for duplicate user by email address
@@ -153,6 +171,22 @@
       }
 
       /**
+       * Fetching user by id
+       * @param Int $id User id
+       */
+      public function getUserById($id) {
+          $stmt = $this->conn->prepare("SELECT id, first_name, last_name, email, phone, birthdate, created_at FROM users WHERE id = ?");
+          $stmt->bind_param("s", $id);  
+          if ($stmt->execute()) {
+              $user = $stmt->get_result()->fetch_assoc();
+              $stmt->close();
+              return $user;
+          } else {
+              return NULL;
+          }
+      }
+
+      /**
        * Fetching user api key
        * @param String $user_id user id primary key in user table
        */
@@ -160,9 +194,9 @@
           $stmt = $this->conn->prepare("SELECT api_key FROM users WHERE id = ?");
           $stmt->bind_param("i", $user_id);
           if ($stmt->execute()) {
-              $api_key = $stmt->get_result()->fetch_assoc();
+              $result = $stmt->get_result()->fetch_assoc();
               $stmt->close();
-              return $api_key;
+              return $result['api_key'];
           } else {
               return NULL;
           }

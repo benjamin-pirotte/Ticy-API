@@ -72,7 +72,17 @@
                 $response['birthdate'] = $user['birthdate'];
                 $response['created_at'] = $user['created_at'];
 
-                echoRespnse(200, $response);
+                $apiKey = $db->getApiKeyById($user['id']);
+                if($apiKey){
+                    $response['api_key'] = $apiKey;
+                    echoRespnse(200, $response);
+                }else {
+                    // unknown error occurred
+                    $response['error'] = true;
+                    $response['message'] = "An error occurred. Please try again";
+
+                    echoRespnse(400, $response);
+                }
             } else {
                 // unknown error occurred
                 $response['error'] = true;
@@ -90,34 +100,100 @@
     });
 
     /**
-    * User Edit
-    * url - /User/edit
+    * User is Logged
+    * url - /islogged
     * method - POST
-    * params - first_name, last_name, phone, birthdate, password, email
     */
-    $app->put('/user/edit','authenticate',function() use ($app) {
+    $app->post('/user/islogged','authenticate', function() use ($app) {
         // Get params
         global $user_id;
-        $firstName = $app->request->put('first_name');
-        $lastName = $app->request->put('last_name');
+
+        $response['error'] = false;
+        $response['message'] = "User is logged";
+        echoRespnse(200, $response);
+    });
+    /**
+    * User Edit
+    * url - /User/edit
+    * method - Put
+    * params - first_name, last_name, phone, birthdate, password, email
+    */
+    $app->put('/user/edit','authenticate',function() use ($app) { 
+        // Get params
+        global $user_id;
+        $first_name = $app->request->put('first_name');
+        $last_name = $app->request->put('last_name');
         $phone = $app->request->put('phone');
         $birthdate = $app->request->put('birthdate');
         $password = $app->request->put('password');        
 
         $db = new DbHandlerUser();
         $response = array();
-
+        
         // updating task
-        $result = $db->editUser($user_id, $first_name, $last_name, $birthdate, $password);
+        $result = $db->editUser($user_id, $first_name, $last_name, $phone, $birthdate);
         if ($result) {
-            // task updated successfully
-            $response["error"] = false;
-            $response["message"] = "User updated successfully";
-            echoRespnse(200, $response);
+            $user = $db->getUserById($user_id);
+             if ($user != NULL) {
+                $response["error"] = false;
+                $response["message"] = "User updated successfully";
+                $response['id'] = $user['id'];
+                $response['first_name'] = $user['first_name'];
+                $response['last_name'] = $user['last_name'];
+                $response['email'] = $user['email'];
+                $response['phone'] = $user['phone'];
+                $response['birthdate'] = $user['birthdate'];
+                $response['created_at'] = $user['created_at'];
+
+                echoRespnse(200, $response);
+            } else {
+                // unknown error occurred
+                $response['error'] = true;
+                $response['message'] = "An error occurred. Please try again";
+
+                echoRespnse(400, $response);
+            }
         } else {
             // task failed to update
             $response["error"] = true;
             $response["message"] = "User failed to update. Please try again!";
+            echoRespnse(400, $response);
+        }
+    });
+
+    /**
+    * User Edit password
+    * url - /User/updatepassword
+    * method - Put
+    * params - first_name, last_name, phone, birthdate, password, email
+    */
+    $app->put('/user/updatepassword','authenticate',function() use ($app) { 
+        // Get params
+        global $user_id;
+        $password = $app->request->put('password'); 
+
+        $db = new DbHandlerUser();
+        $response = array();
+        
+        // updating task
+        $result = $db->editUserPassword($user_id, $password);
+        if ($result) {
+            $apiKey = $db->getApiKeyById($user_id);
+            var_dump($apiKey);
+            if($apiKey){
+                $response['error'] = false;
+                $response['message'] = "Password has been updated";
+                $response['api_key'] = $apiKey;
+                echoRespnse(200, $response);
+            }else {
+                $response['error'] = true;
+                $response['message'] = "An error occurred. Please change your password again or contact our support";
+                echoRespnse(400, $response);
+            }
+        } else {
+            // task failed to update
+            $response["error"] = true;
+            $response["message"] = "Password failed to update. Please try again!";
             echoRespnse(400, $response);
         }
     });
