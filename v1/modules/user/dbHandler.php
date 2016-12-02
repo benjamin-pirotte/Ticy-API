@@ -6,7 +6,7 @@
    *
    * @author Ravi Tamada
    */
-  class DbHandlerAccount {
+  class DbHandlerUser {
 
       private $conn;
 
@@ -41,7 +41,7 @@
               // insert query
               $stmt = $this->conn->prepare("INSERT INTO users(first_name, last_name, email, password_hash, phone, birthdate, api_key, status) values(?, ?, ?, ?, ?, ?, ?, 1)");
               
-              $stmt->bind_param("sssssss", $first_name, $last_name, $email, $phone, $birthdate, $password_hash, $api_key);
+              $stmt->bind_param("sssssss", $first_name, $last_name, $email, $password_hash, $phone, $birthdate, $api_key);
 
               $result = $stmt->execute();
 
@@ -141,8 +141,8 @@
        * @param String $email User email id
        */
       public function getUserByEmail($email) {
-          $stmt = $this->conn->prepare("SELECT name, email, api_key, status, created_at FROM users WHERE email = ?");
-          $stmt->bind_param("s", $email);
+          $stmt = $this->conn->prepare("SELECT id, first_name, last_name, email, phone, birthdate, created_at FROM users WHERE email = ?");
+          $stmt->bind_param("s", $email);  
           if ($stmt->execute()) {
               $user = $stmt->get_result()->fetch_assoc();
               $stmt->close();

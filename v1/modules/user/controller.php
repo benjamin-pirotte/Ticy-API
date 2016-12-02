@@ -7,7 +7,7 @@
     */
     require_once dirname(__FILE__) . '/dbHandler.php';
 
-    $app->post('/register', function() use ($app) {
+    $app->post('/user/register', function() use ($app) {
         // check for required params
         verifyRequiredParams(array('first_name', 'last_name', 'email', 'password', 'phone', 'birthdate'));
 
@@ -24,7 +24,7 @@
         // validating email address
         validateEmail($email);
 
-        $db = new DbHandlerAccount();
+        $db = new DbHandlerUser();
         $res = $db->createUser($first_name, $last_name, $email, $password, $phone, $birthdate);
 
         if ($res == USER_CREATED_SUCCESSFULLY) {
@@ -47,7 +47,7 @@
     * method - POST
     * params - email, password
     */
-    $app->post('/login', function() use ($app) {
+    $app->post('/user/login', function() use ($app) {
         // check for required params
         verifyRequiredParams(array('email', 'password'));
 
@@ -56,7 +56,7 @@
         $password = $app->request()->post('password');
         $response = array();
 
-        $db = new DbHandlerAccount();
+        $db = new DbHandlerUser();
         // check for correct email and password
         if ($db->checkLogin($email, $password)) {
             // get the user by email
@@ -64,10 +64,13 @@
 
             if ($user != NULL) {
                 $response["error"] = false;
-                $response['name'] = $user['first_name'];
+                $response['id'] = $user['id'];
+                $response['first_name'] = $user['first_name'];
+                $response['last_name'] = $user['last_name'];
                 $response['email'] = $user['email'];
-                $response['apiKey'] = $user['api_key'];
-                $response['createdAt'] = $user['created_at'];
+                $response['phone'] = $user['phone'];
+                $response['birthdate'] = $user['birthdate'];
+                $response['created_at'] = $user['created_at'];
 
                 echoRespnse(200, $response);
             } else {
@@ -101,7 +104,7 @@
         $birthdate = $app->request->put('birthdate');
         $password = $app->request->put('password');        
 
-        $db = new DbHandlerAccount();
+        $db = new DbHandlerUser();
         $response = array();
 
         // updating task
