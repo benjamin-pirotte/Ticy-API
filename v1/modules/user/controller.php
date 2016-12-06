@@ -104,13 +104,30 @@
     * url - /islogged
     * method - POST
     */
-    $app->post('/user/islogged','authenticate', function() use ($app) {
+    $app->post('/user/details','authenticate', function() use ($app) {
         // Get params
         global $user_id;
 
-        $response['error'] = false;
-        $response['message'] = "User is logged";
-        echoRespnse(200, $response);
+        $user = $db->getUserById($user_id);
+        if ($user != NULL) {
+            $response["error"] = false;
+            $response["message"] = "User updated successfully";
+            $response['id'] = $user['id'];
+            $response['first_name'] = $user['first_name'];
+            $response['last_name'] = $user['last_name'];
+            $response['email'] = $user['email'];
+            $response['phone'] = $user['phone'];
+            $response['birthdate'] = $user['birthdate'];
+            $response['created_at'] = $user['created_at'];
+
+            echoRespnse(200, $response);
+        } else {
+            // unknown error occurred
+            $response['error'] = true;
+            $response['message'] = "An error occurred. Please try again";
+
+            echoRespnse(400, $response);
+        }
     });
     /**
     * User Edit
