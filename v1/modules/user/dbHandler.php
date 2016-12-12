@@ -26,8 +26,9 @@
        * @param String $password User login password
        * @param String $phone
        * @param String $birthdate
+       * @param String $email
        */
-      public function createUser($first_name, $last_name, $email, $password, $phone, $birthdate) {
+      public function createUser($first_name, $last_name, $email, $password, $phone, $birthdate, $gender) {
           $response = array();
 
           // First check if user already existed in db
@@ -39,9 +40,9 @@
               $api_key = $this->generateApiKey();
 
               // insert query
-              $stmt = $this->conn->prepare("INSERT INTO users(first_name, last_name, email, password_hash, phone, birthdate, api_key, status) values(?, ?, ?, ?, ?, ?, ?, 1)");
+              $stmt = $this->conn->prepare("INSERT INTO users(first_name, last_name, email, password_hash, phone, birthdate, gender, api_key, status) values(?, ?, ?, ?, ?, ?, ?, 1)");
               
-              $stmt->bind_param("sssssss", $first_name, $last_name, $email, $password_hash, $phone, $birthdate, $api_key);
+              $stmt->bind_param("ssssssss", $first_name, $last_name, $email, $password_hash, $phone, $birthdate, $gender, $api_key);
 
               $result = $stmt->execute();
 
@@ -108,16 +109,21 @@
        * Edit user
        * @param String $first_name User new first_name
        * @param String $last_name User new last_name
-       * @param String $birthdate User new birthdate
+       * @param String $email User new email
        * @param String $phone User new phone
+       * @param String $gender User new gender
        */
-      public function editUser($user_id, $first_name, $last_name, $birthdate, $phone) {
-          $stmt = $this->conn->prepare("UPDATE users SET first_name = ?, last_name = ?, birthdate = ?, phone = ? Where id = ?");
-          $stmt->bind_param("ssssi", $first_name, $last_name, $birthdate, $phone, $user_id);
-          $stmt->execute();
-          $num_affected_rows = $stmt->affected_rows;
-          $stmt->close();
-          return $num_affected_rows > 0;
+      public function editUser($user_id, $first_name, $last_name, $email, $phone, $birthdate, $gender) {
+          if (!$this->isUserExists($email)) {
+            $stmt = $this->conn->prepare("UPDATE users SET first_name = ?, last_name = ?, email = ?, phone = ?, birthdate = ?, gender = ? Where id = ?");
+            $stmt->bind_param("sssssi", $first_name, $last_name, $email, $phone, $birthdate, $gender, $user_id);
+            $stmt->execute();
+            $num_affected_rows = $stmt->affected_rows;
+            $stmt->close();
+            return $num_affected_rows > 0;
+          }else {
+              return USER_ALREADY_EXISTED;
+          }
       }
 
        /**
@@ -159,7 +165,7 @@
        * @param String $email User email id
        */
       public function getUserByEmail($email) {
-          $stmt = $this->conn->prepare("SELECT id, first_name, last_name, email, phone, birthdate, created_at FROM users WHERE email = ?");
+          $stmt = $this->conn->prepare("SELECT id, first_name, last_name, email, phone, birthdate, gender, created_at FROM users WHERE email = ?");
           $stmt->bind_param("s", $email);  
           if ($stmt->execute()) {
               $user = $stmt->get_result()->fetch_assoc();
@@ -175,7 +181,7 @@
        * @param Int $id User id
        */
       public function getUserById($id) {
-          $stmt = $this->conn->prepare("SELECT id, first_name, last_name, email, phone, birthdate, created_at FROM users WHERE id = ?");
+          $stmt = $this->conn->prepare("SELECT id, first_name, last_name, email, phone, birthdate, gender, created_at FROM users WHERE id = ?");
           $stmt->bind_param("s", $id);  
           if ($stmt->execute()) {
               $user = $stmt->get_result()->fetch_assoc();

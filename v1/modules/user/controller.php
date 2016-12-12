@@ -20,12 +20,13 @@
         $password = $app->request->post('password');
         $phone = $app->request->post('phone');
         $birthdate = $app->request->post('birthdate');
+        $birthdate = $app->request->post('gender');
 
         // validating email address
         validateEmail($email);
 
         $db = new DbHandlerUser();
-        $res = $db->createUser($first_name, $last_name, $email, $password, $phone, $birthdate);
+        $res = $db->createUser($first_name, $last_name, $email, $password, $phone, $birthdate, $gender);
 
         if ($res == USER_CREATED_SUCCESSFULLY) {
             $response["error"] = false;
@@ -108,16 +109,19 @@
         // Get params
         global $user_id;
 
+        $db = new DbHandlerUser();
+        $response = array();
+
         $user = $db->getUserById($user_id);
         if ($user != NULL) {
             $response["error"] = false;
-            $response["message"] = "User updated successfully";
             $response['id'] = $user['id'];
             $response['first_name'] = $user['first_name'];
             $response['last_name'] = $user['last_name'];
             $response['email'] = $user['email'];
             $response['phone'] = $user['phone'];
             $response['birthdate'] = $user['birthdate'];
+            $response['gender'] = $user['gender'];
             $response['created_at'] = $user['created_at'];
 
             echoRespnse(200, $response);
@@ -133,22 +137,23 @@
     * User Edit
     * url - /User/edit
     * method - Put
-    * params - first_name, last_name, phone, birthdate, password, email
+    * params - first_name, last_name, phone, birthdate, email
     */
     $app->put('/user/edit','authenticate',function() use ($app) { 
         // Get params
         global $user_id;
         $first_name = $app->request->put('first_name');
         $last_name = $app->request->put('last_name');
+        $email = $app->request->put('email');
         $phone = $app->request->put('phone');
         $birthdate = $app->request->put('birthdate');
-        $password = $app->request->put('password');        
+        $gender = $app->request->put('gender');   
 
         $db = new DbHandlerUser();
         $response = array();
         
         // updating task
-        $result = $db->editUser($user_id, $first_name, $last_name, $phone, $birthdate);
+        $result = $db->editUser($user_id, $first_name, $last_name, $email, $phone, $birthdate, $gender);
         if ($result) {
             $user = $db->getUserById($user_id);
              if ($user != NULL) {
@@ -188,6 +193,15 @@
         // Get params
         global $user_id;
         $password = $app->request->put('password'); 
+        $password_copy = $app->request->put('password_copy'); 
+
+        if($password !== $password_copy){
+            // task failed to update
+            $response["error"] = true;
+            $response["message"] = "Passwords don't match. Please try again!";
+            echoRespnse(400, $response);
+            return;
+        }
 
         $db = new DbHandlerUser();
         $response = array();
