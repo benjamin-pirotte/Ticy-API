@@ -6,12 +6,11 @@
       $error = false;
       $error_fields = "";
       $request_params = array();
-      $request_params = $_REQUEST;
-      // Handling PUT request params
-      if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
-          $app = \Slim\Slim::getInstance();
-          parse_str($app->request()->getBody(), $request_params);
-      }
+
+      $app = \Slim\Slim::getInstance();
+      $json = $app->request->getBody();
+      $request_params = json_decode($json, true); 
+            
       foreach ($required_fields as $field) {
           if (!isset($request_params[$field]) || strlen(trim($request_params[$field])) <= 0) {
               $error = true;

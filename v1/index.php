@@ -5,9 +5,7 @@
   \Slim\Slim::registerAutoloader();
 
   $app = new \Slim\Slim();
-
-  // User id from db - Global Variable
-  $user_id = NULL;
+  $app->request->headers->set('Content-Type', 'application/json');
 
   // Db connnect
   require_once dirname(dirname(__FILE__)) . '/config/DbConnect.php';

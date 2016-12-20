@@ -1,4 +1,7 @@
 <?php
+    // User id from db - Global Variable
+    $user_id = NULL;
+
     /**
     * User Registration
     * url - /register
@@ -9,18 +12,21 @@
 
     $app->post('/user/register', function() use ($app) {
         // check for required params
-        verifyRequiredParams(array('first_name', 'last_name', 'email', 'password', 'phone', 'birthdate'));
+        verifyRequiredParams(array('first_name', 'last_name', 'email', 'password', 'phone', 'birthdate', 'gender'));
+
+        $json = $app->request->getBody();
+        $user = json_decode($json, true); 
 
         $response = array();
 
         // reading post params
-        $first_name = $app->request->post('first_name');
-        $last_name = $app->request->post('last_name');
-        $email = $app->request->post('email');
-        $password = $app->request->post('password');
-        $phone = $app->request->post('phone');
-        $birthdate = $app->request->post('birthdate');
-        $birthdate = $app->request->post('gender');
+        $first_name = $user['first_name'];
+        $last_name = $user['last_name'];
+        $email = $user['email'];
+        $password = $user['password'];
+        $phone = $user['phone'];
+        $birthdate = $user['birthdate'];
+        $gender = $user['gender'];
 
         // validating email address
         validateEmail($email);
@@ -52,9 +58,12 @@
         // check for required params
         verifyRequiredParams(array('email', 'password'));
 
+        $json = $app->request->getBody();
+        $user = json_decode($json, true); 
+
         // reading post params
-        $email = $app->request()->post('email');
-        $password = $app->request()->post('password');
+        $email = $user['email'];
+        $password = $user['password'];
         $response = array();
 
         $db = new DbHandlerUser();
