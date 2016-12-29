@@ -24,11 +24,9 @@
        * @param String $lastName
        * @param String $email User login email id
        * @param String $password User login password
-       * @param String $phone
-       * @param String $birthdate
-       * @param String $email
+       * @param String $age
        */
-      public function createUser($first_name, $last_name, $email, $password, $phone, $birthdate, $gender) {
+      public function createUser($first_name, $last_name, $email, $password, $age) {
           $response = array();
 
           // First check if user already existed in db
@@ -40,9 +38,9 @@
               $api_key = $this->generateApiKey();
 
               // insert query
-              $stmt = $this->conn->prepare("INSERT INTO users(first_name, last_name, email, password_hash, phone, birthdate, gender, api_key, status) values (?, ?, ?, ?, ?, ?, ?, ?, 1)");
+              $stmt = $this->conn->prepare("INSERT INTO users(first_name, last_name, email, password_hash, age, api_key, status) values (?, ?, ?, ?, ?, ?, 1)");
               
-              $stmt->bind_param("ssssssss", $first_name, $last_name, $email, $password_hash, $phone, $birthdate, $gender, $api_key);
+              $stmt->bind_param("ssssss", $first_name, $last_name, $email, $password_hash, $age, $api_key);
 
               $result = $stmt->execute();
 
@@ -51,14 +49,14 @@
               // Check for successful insertion
               if ($result) {
                   // User successfully inserted
-                  return USER_CREATED_SUCCESSFULLY;
+                  return 'USER_CREATED_SUCCESSFULLY';
               } else {
                   // Failed to create user
-                  return USER_CREATE_FAILED;
+                  return 'USER_CREATE_FAILED';
               }
           } else {
               // User with same email already existed in the db
-              return USER_ALREADY_EXISTED;
+              return 'USER_ALREADY_EXISTED';
           }
 
           return $response;
@@ -107,37 +105,40 @@
 
       /**
        * Edit user
+       * @param String $email User new email
        * @param String $first_name User new first_name
        * @param String $last_name User new last_name
-       * @param String $email User new email
-       * @param String $phone User new phone
-       * @param String $gender User new gender
+       * @param String $age User new age
        */
-      public function editUser($user_id, $first_name, $last_name, $email, $phone, $birthdate, $gender) {
-          if (!$this->isUserExists($email)) {
-            $stmt = $this->conn->prepare("UPDATE users SET first_name = ?, last_name = ?, email = ?, phone = ?, birthdate = ?, gender = ? Where id = ?");
-            $stmt->bind_param("sssssi", $first_name, $last_name, $email, $phone, $birthdate, $gender, $user_id);
+      public function editUser($user_id, $email, $first_name, $last_name, $age) {
+          $user = $this->getUserById($user_id);
+          
+          if (!$this->isUserExists($email) || $user['email'] == $email) {
+            $stmt = $this->conn->prepare("UPDATE users SET email = ?, first_name = ?, last_name = ?, age = ? Where id = ?");
+            $stmt->bind_param("ssssi", $email, $first_name, $last_name, $age, $user_id);
             $stmt->execute();
             $num_affected_rows = $stmt->affected_rows;
             $stmt->close();
-            return $num_affected_rows > 0;
+            if($num_affected_rows > 0){
+                return 'USER_UPDATED';
+            } else {
+                return 'NOT_CHANGE';
+            }
           }else {
-              return USER_ALREADY_EXISTED;
+              return 'EMAIL_ALREADY_TAKEN';
           }
       }
 
        /**
        * Edit user password
-       * @param String $password User new password
+       * @param String $old_password User old password
+       * @param String $new_password User new password
        */
-        public function editUserPassword($user_id, $password) {
-            $password_hash = PassHash::hash($password);
-
+        public function editUserPassword($user_id, $old_password, $new_password) {
             // Generating API key
             $api_key = $this->generateApiKey();
-
             $stmt = $this->conn->prepare("UPDATE users SET password_hash = ?, api_key = ? Where id = ?");
-            $stmt->bind_param("ssi", $password_hash, $api_key, $user_id);
+            $stmt->bind_param("ssis", $new_password_hash, $api_key, $user_id, $old_password_hash);
             $stmt->execute();
             $num_affected_rows = $stmt->affected_rows;
             $stmt->close();
@@ -165,7 +166,7 @@
        * @param String $email User email id
        */
       public function getUserByEmail($email) {
-          $stmt = $this->conn->prepare("SELECT id, first_name, last_name, email, phone, birthdate, gender, created_at FROM users WHERE email = ?");
+          $stmt = $this->conn->prepare("SELECT id, first_name, last_name, email, age, phone, birthdate, gender, profile_picture_uri, created_at, api_key FROM users WHERE email = ?");
           $stmt->bind_param("s", $email);  
           if ($stmt->execute()) {
               $user = $stmt->get_result()->fetch_assoc();
@@ -181,7 +182,7 @@
        * @param Int $id User id
        */
       public function getUserById($id) {
-          $stmt = $this->conn->prepare("SELECT id, first_name, last_name, email, phone, birthdate, gender, created_at FROM users WHERE id = ?");
+          $stmt = $this->conn->prepare("SELECT id, first_name, last_name, email, age, phone, birthdate, gender, profile_picture_uri, created_at, api_key FROM users WHERE id = ?");
           $stmt->bind_param("s", $id);  
           if ($stmt->execute()) {
               $user = $stmt->get_result()->fetch_assoc();

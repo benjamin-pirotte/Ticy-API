@@ -10,11 +10,11 @@
     $app = \Slim\Slim::getInstance();
 
     // Verifying Authorization Header
-    if (isset($headers['Authorization'])) {
+    if (isset($headers['authorization'])) {
         $db = new DbHandlerUser();
 
         // get the api key
-        $api_key = $headers['Authorization'];
+        $api_key = $headers['authorization'];
         // validating api key
         if (!$db->isValidApiKey($api_key)) {
             // api key is not present in users table
@@ -32,7 +32,7 @@
     } else {
         // api key is missing in header
         $response["error"] = true;
-        $response["message"] = var_dump($headers);
+        $response["message"] = "Access Denied. No Authorization header set";
         echoRespnse(400, $response);
         $app->stop();
     }
