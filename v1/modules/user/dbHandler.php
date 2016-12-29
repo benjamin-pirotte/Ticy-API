@@ -40,7 +40,7 @@
               $api_key = $this->generateApiKey();
 
               // insert query
-              $stmt = $this->conn->prepare("INSERT INTO users(first_name, last_name, email, password_hash, phone, birthdate, gender, api_key, status) values(?, ?, ?, ?, ?, ?, ?, 1)");
+              $stmt = $this->conn->prepare("INSERT INTO users(first_name, last_name, email, password_hash, phone, birthdate, gender, api_key, status) values (?, ?, ?, ?, ?, ?, ?, ?, 1)");
               
               $stmt->bind_param("ssssssss", $first_name, $last_name, $email, $password_hash, $phone, $birthdate, $gender, $api_key);
 

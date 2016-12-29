@@ -35,9 +35,35 @@
         $res = $db->createUser($first_name, $last_name, $email, $password, $phone, $birthdate, $gender);
 
         if ($res == USER_CREATED_SUCCESSFULLY) {
+        
+            $user = $db->getUserByEmail($email);
+        
+            if ($user != NULL) {
+                $response['id'] = $user['id'];
+                $response['first_name'] = $user['first_name'];
+                $response['last_name'] = $user['last_name'];
+                $response['email'] = $user['email'];
+                $response['phone'] = $user['phone'];
+                $response['birthdate'] = $user['birthdate'];
+                $response['gender'] = $user['gender'];
+                $response['created_at'] = $user['created_at'];
+
+                $apiKey = $db->getApiKeyById($user['id']);
+                if($apiKey){
+                    $response['api_key'] = $apiKey;
+                } else {
+                    $response["message"] = "Oops! An error occurred while registereing";
+                    echoRespnse(400, $response);
+                }
+            } else {
+                $response["message"] = "Oops! An error occurred while registereing";
+                echoRespnse(400, $response);
+            } 
+
             $response["error"] = false;
             $response["message"] = "You are successfully registered";
             echoRespnse(201, $response);
+
         } else if ($res == USER_CREATE_FAILED) {
             $response["error"] = true;
             $response["message"] = "Oops! An error occurred while registereing";
