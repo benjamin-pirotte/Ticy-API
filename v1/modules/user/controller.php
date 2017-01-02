@@ -6,7 +6,7 @@
     * User Registration
     * url - /register
     * method - POST
-    * params - eùmail, first_name, last_name, email, password, age
+    * params - email, first_name, last_name, email, password, age
     */
     require_once dirname(__FILE__) . '/dbHandler.php';
 
