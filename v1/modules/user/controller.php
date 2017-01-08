@@ -8,6 +8,7 @@
     * method - POST
     * params - email, first_name, last_name, email, password, age
     */
+    require_once dirname(__FILE__) . '/constants.php';
     require_once dirname(__FILE__) . '/dbHandler.php';
 
     $app->post('/user/register', function() use ($app) {
@@ -32,7 +33,7 @@
         $db = new DbHandlerUser();
         $res = $db->createUser($first_name, $last_name, $email, $password, $age);
 
-        if ($res == 'USER_CREATED_SUCCESSFULLY') {
+        if ($res == USER_CREATED_SUCCESSFULLY) {
         
             $user = $db->getUserByEmail($email);
         
@@ -47,24 +48,16 @@
                 $response['profile_picture_uri'] = $user['profile_picture_uri'];
                 $response['created_at'] = $user['created_at'];
                 $response['api_key'] = $user['api_key'];
-
-                echoRespnse(200, $response);
+                echoRespnse(201, $response);
             } else {
-                $response["message"] = "Oops! An error occurred while registereing";
+                $response["message"] = CANT_RETURN_USER;
                 echoRespnse(400, $response);
             } 
-
-            $response["error"] = false;
-            $response["message"] = "You are successfully registered";
-            echoRespnse(201, $response);
-
-        } else if ($res == 'USER_CREATE_FAILED') {
-            $response["error"] = true;
-            $response["message"] = "Oops! An error occurred while registereing";
+        } else if ($res == FAILED_TO_CREATE) {
+            $response["message"] = FAILED_TO_CREATE;
             echoRespnse(400, $response);
-        } else if ($res == 'USER_ALREADY_EXISTED') {
-            $response["error"] = true;
-            $response["message"] = "Sorry, this email already existed";
+        } else if ($res == EMAIL_ALREADY_TAKEN) {
+            $response["message"] = EMAIL_ALREADY_TAKEN;
             echoRespnse(401, $response);
         }
     });
@@ -93,7 +86,6 @@
             $user = $db->getUserByEmail($email);
 
             if ($user != NULL) {
-                $response["error"] = false;
                 $response['id'] = $user['id'];
                 $response['first_name'] = $user['first_name'];
                 $response['last_name'] = $user['last_name'];
@@ -104,20 +96,15 @@
                 $response['profile_picture_uri'] = $user['profile_picture_uri'];
                 $response['created_at'] = $user['created_at'];
                 $response['api_key'] = $user['api_key'];
-
                 echoRespnse(200, $response);
             } else {
                 // unknown error occurred
-                $response['error'] = true;
-                $response['message'] = "An error occurred. Please try again";
-
+                $response['message'] = CANT_RETURN_USER;
                 echoRespnse(400, $response);
             }
         } else {
             // user credentials are wrong
-            $response['error'] = true;
-            $response['message'] = 'Login failed. Incorrect credentials';
-
+            $response['message'] = INCORRECT_CREDENTIALS;
             echoRespnse(400, $response);
         }
     });
@@ -147,13 +134,10 @@
             $response['profile_picture_uri'] = $user['profile_picture_uri'];
             $response['created_at'] = $user['created_at'];
             $response['api_key'] = $user['api_key'];
-            
             echoRespnse(200, $response);
         } else {
             // unknown error occurred
-            $response['error'] = true;
-            $response['message'] = "An error occurred. Please try again";
-
+            $response['message'] = CANT_RETURN_USER;
             echoRespnse(400, $response);
         }
     });
@@ -182,7 +166,7 @@
 
         // updating task
         $res = $db->editUser($user_id, $email, $first_name, $last_name, $age);
-        if ($res == 'USER_UPDATED') {
+        if ($res == USER_UPDATED) {
             $user = $db->getUserById($user_id);
              if ($user != NULL) {
                 $response["error"] = false;
@@ -197,23 +181,21 @@
                 $response['profile_picture_uri'] = $user['profile_picture_uri'];
                 $response['created_at'] = $user['created_at'];
                 $response['api_key'] = $user['api_key'];
-
                 echoRespnse(200, $response);
             } else {
                 // unknown error occurred
-                $response['error'] = true;
-                $response['message'] = "An error occurred. Please try again";
-
+                $response['message'] = CANT_RETURN_USER;
                 echoRespnse(400, $response);
             }
-        } else if( $res == 'EMAIL_ALREADY_TAKEN') {
+        } else if($res == EMAIL_ALREADY_TAKEN) {
             // task failed to update
-            $response["error"] = true;
-            $response["message"] = "User failed to update. The email adress is already taken!";
+            $response["message"] = EMAIL_ALREADY_TAKEN;
             echoRespnse(401, $response);
+        } else if($res == NO_CHANGE) {
+            // task didn't update user because no change
+            $response["message"] = NO_CHANGE;
         } else {
-            $response["error"] = true;
-            $response["message"] = "User failed to update. Please try again!";
+            $response["message"] = FAILED_TO_UPDATE;
             echoRespnse(400, $response);
         }
     });
@@ -241,23 +223,27 @@
         $response = array();
         
         // updating task
-        $result = $db->editUserPassword($user_id, $old_password, $new_password);
-        if ($result) {
+        $res = $db->editUserPassword($user_id, $old_password, $new_password);
+        if ($res == PASSWORD_IS_CHANGED) {
             $apiKey = $db->getApiKeyById($user_id);
             if($apiKey){
-                $response['error'] = false;
-                $response['message'] = "Password has been updated";
                 $response['api_key'] = $apiKey;
                 echoRespnse(200, $response);
-            }else {
-                $response['error'] = true;
-                $response['message'] = "An error occurred. Please change your password again or contact our support";
+            } else {
+                $response['message'] = "An error occurred. Please log out and login";
                 echoRespnse(400, $response);
             }
+        } else if($res == NO_CHANGE) {
+            // task failed to update
+            $response["message"] = NO_CHANGE;
+            echoRespnse(400, $response);
+        } else if($res == INCORRECT_CREDENTIALS) {
+            // task failed to update
+            $response["message"] = INCORRECT_CREDENTIALS;
+            echoRespnse(401, $response);
         } else {
             // task failed to update
-            $response["error"] = true;
-            $response["message"] = "Password failed to update. Please try again!";
+            $response["message"] = FAILED_TO_UPDATE;
             echoRespnse(400, $response);
         }
     });
