@@ -13,7 +13,7 @@
 
     $app->post('/user/register', function() use ($app) {
         // check for required params
-        verifyRequiredParams(array('first_name', 'last_name', 'email', 'password', 'age'));
+        verifyRequiredParams(array('first_name', 'last_name', 'email', 'password', 'password_copy', 'age'));
 
         $json = $app->request->getBody();
         $user = json_decode($json, true); 
@@ -25,7 +25,14 @@
         $first_name = $user['first_name'];
         $last_name = $user['last_name'];
         $password = $user['password'];
+        $password_copy = $user['password_copy'];
         $age = $user['age'];
+
+        if($password != $password_copy){
+            $response["message"] = PASSWORDS_ARE_NOT_IDENTICAL;
+            echoRespnse(400, $response);
+            $app->stop();
+        }
 
         // validating email address
         validateEmail($email);
@@ -60,6 +67,8 @@
             $response["message"] = EMAIL_ALREADY_TAKEN;
             echoRespnse(401, $response);
         }
+
+        $app->stop();
     });
     /**
     * User Login
@@ -107,6 +116,8 @@
             $response['message'] = INCORRECT_CREDENTIALS;
             echoRespnse(400, $response);
         }
+
+        $app->stop();
     });
 
     /**
@@ -140,6 +151,8 @@
             $response['message'] = CANT_RETURN_USER;
             echoRespnse(400, $response);
         }
+
+        $app->stop();
     });
     /**
     * User Edit
@@ -194,10 +207,13 @@
         } else if($res == NO_CHANGE) {
             // task didn't update user because no change
             $response["message"] = NO_CHANGE;
+            echoRespnse(400, $response);
         } else {
             $response["message"] = FAILED_TO_UPDATE;
             echoRespnse(400, $response);
         }
+
+        $app->stop();
     });
 
     /**
@@ -208,7 +224,7 @@
     */
     $app->put('/user/editpassword','authenticate',function() use ($app) { 
         //verify params 
-        verifyRequiredParams(array('old_password', 'new_password'));
+        verifyRequiredParams(array('old_password', 'password', 'password_copy'));
 
         // Get params
         $json = $app->request->getBody();
@@ -217,20 +233,27 @@
         global $user_id;
 
         $old_password = $password['old_password']; 
-        $new_password = $password['new_password']; 
+        $password = $password['password']; 
+        $password_copy = $password['password_copy']; 
+
+        if($password != $password_copy){
+            $response["message"] = PASSWORDS_ARE_NOT_THE_SAMEUTHORIZATION;
+            echoRespnse(400, $response);
+            $app->stop();
+        }
 
         $db = new DbHandlerUser();
         $response = array();
         
         // updating task
-        $res = $db->editUserPassword($user_id, $old_password, $new_password);
+        $res = $db->editUserPassword($user_id, $old_password, $password);
         if ($res == PASSWORD_IS_CHANGED) {
             $apiKey = $db->getApiKeyById($user_id);
             if($apiKey){
                 $response['api_key'] = $apiKey;
                 echoRespnse(200, $response);
             } else {
-                $response['message'] = "An error occurred. Please log out and login";
+                $response['message'] = CANT_RETURN_API_KEY;
                 echoRespnse(400, $response);
             }
         } else if($res == NO_CHANGE) {
@@ -246,5 +269,7 @@
             $response["message"] = FAILED_TO_UPDATE;
             echoRespnse(400, $response);
         }
+
+        $app->stop();
     });
 ?>
